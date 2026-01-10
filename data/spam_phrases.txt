@@ -1,0 +1,9 @@
+# Спам-фразы для фильтрации анкоров (по одной на строку)
+casino
+viagra
+porn
+xxx
+gambling
+pills
+poker
+betting

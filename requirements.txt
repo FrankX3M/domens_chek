@@ -1,0 +1,28 @@
+# HTTP клиент
+aiohttp>=3.9.0
+
+# Парсинг доменов
+tldextract>=5.1.0
+
+# База данных
+aiosqlite>=0.19.0
+
+# Переменные окружения
+python-dotenv>=1.0.0
+
+# Excel экспорт
+openpyxl>=3.1.0
+
+# Опционально: локальный WHOIS
+python-whois>=0.8.0
+
+# Тестирование
+pytest>=7.4.0
+pytest-asyncio>=0.21.0
+pytest-mock>=3.12.0
+pytest-cov>=4.1.0
+
+# Линтинг
+black>=23.0.0
+flake8>=6.1.0
+mypy>=1.7.0

@@ -1,0 +1,11 @@
+# Исключенные домены (по одному на строку)
+facebook.com
+twitter.com
+youtube.com
+google.com
+linkedin.com
+instagram.com
+pinterest.com
+reddit.com
+medium.com
+wikipedia.org
