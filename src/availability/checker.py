@@ -61,7 +61,10 @@ class DomainAvailabilityChecker:
         self.bootstrap_loader = RDAPBootstrapLoader()
         self._bootstrap_loaded = False
         self.rdap_checker = RDAPChecker(self.bootstrap_loader) if not skip_rdap else None
-        self.whois_checker = WHOISChecker(whois_api_key, whois_provider) if whois_api_key else None
+        self.whois_checker = WHOISChecker(
+            api_provider=whois_provider,
+            api_key=whois_api_key
+        ) if whois_api_key else None
 
         logger.info(
             f"Domain Availability Checker инициализирован "
