@@ -118,11 +118,18 @@ class DomainFilteringPipeline:
             for result in availability_results
         }
         
-        # Создаем словарь для подсчета backlinks
+        # Создаем словарь для подсчета ссылок
+        # Подсчитываем количество ссылок для каждого домена
         backlink_counts = {}
-        for backlink in backlinks:
-            domain = backlink.get('domain', '')
-            backlink_counts[domain] = backlink_counts.get(domain, 0) + 1
+        for link in backlinks:
+            # Получаем домен из ссылки (backlink или outlink)
+            domain = link.get('source_name') or link.get('name')
+            if domain:
+                # Удаляем www. для единообразия
+                domain = domain.lower().strip()
+                if domain.startswith('www.'):
+                    domain = domain[4:]
+                backlink_counts[domain] = backlink_counts.get(domain, 0) + 1
         
         # Обрабатываем каждый домен
         filtered_domains = []
@@ -140,6 +147,7 @@ class DomainFilteringPipeline:
                     availability.status.value == "REGISTERED"
                     if availability else False
                 ),
+                availability_status=availability.status.value if availability else "UNKNOWN",
                 backlink_count=backlink_counts.get(domain, 0)
             )
             

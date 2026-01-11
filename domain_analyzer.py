@@ -53,7 +53,13 @@ async def main():
         '--limit',
         type=int,
         default=100000,
-        help='Максимум обратных ссылок (по умолчанию: 100000)'
+        help='Максимум ссылок для сбора (по умолчанию: 100000)'
+    )
+    parser.add_argument(
+        '--link-type',
+        choices=['backlinks', 'outlinks', 'all'],
+        default='backlinks',
+        help='Тип ссылок для анализа: backlinks (входящие), outlinks (исходящие), all (все)'
     )
     parser.add_argument(
         '--spam-file',
@@ -74,6 +80,11 @@ async def main():
         '--skip-metrics',
         action='store_true',
         help='Не собирать дополнительные метрики'
+    )
+    parser.add_argument(
+        '--only-available',
+        action='store_true',
+        help='Показать только свободные домены (AVAILABLE)'
     )
     parser.add_argument(
         '--include-spam',
@@ -131,20 +142,35 @@ async def main():
             max_retries=api_config.max_retries
         ) as api_client:
             
-            # ЭТАП 1: Сбор обратных ссылок
+            # ЭТАП 1: Сбор ссылок
             logger.info("")
-            logger.info("[1/5] Сбор обратных ссылок...")
-            backlinks = await api_client.get_backlinks(
-                domain=args.domain,
-                limit=args.limit
-            )
-            logger.info(f"✓ Получено обратных ссылок: {len(backlinks)}")
+            all_links = []
+
+            if args.link_type in ['backlinks', 'all']:
+                logger.info("[1/5] Сбор входящих ссылок (backlinks)...")
+                backlinks = await api_client.get_backlinks(
+                    domain=args.domain,
+                    limit=args.limit
+                )
+                logger.info(f"✓ Получено входящих ссылок: {len(backlinks)}")
+                all_links.extend(backlinks)
+
+            if args.link_type in ['outlinks', 'all']:
+                logger.info("[1/5] Сбор исходящих ссылок (outlinks)...")
+                outlinks = await api_client.get_all_outlinks(
+                    domain=args.domain,
+                    limit=args.limit
+                )
+                logger.info(f"✓ Получено исходящих ссылок: {len(outlinks)}")
+                all_links.extend(outlinks)
+
+            logger.info(f"✓ Всего ссылок собрано: {len(all_links)}")
             
             # ЭТАП 2: Извлечение уникальных доменов
             logger.info("")
             logger.info("[2/5] Извлечение уникальных доменов...")
             extractor = DomainExtractor()
-            unique_domains = extractor.extract_unique_domains(backlinks)
+            unique_domains = extractor.extract_unique_domains(all_links)
             logger.info(f"✓ Уникальных доменов: {len(unique_domains)}")
             
             # ЭТАП 3: Проверка доступности
@@ -172,7 +198,7 @@ async def main():
             final_domains = await pipeline.process_domains(
                 domains=unique_domains,
                 availability_results=check_results,
-                backlinks=backlinks
+                backlinks=all_links
             )
             
             # ЭТАП 5: Экспорт
@@ -193,7 +219,8 @@ async def main():
                     final_domains,
                     output_file,
                     include_spam=args.include_spam,
-                    include_excluded=args.include_excluded
+                    include_excluded=args.include_excluded,
+                    only_available=args.only_available
                 )
             elif args.format == 'xlsx':
                 result_file = ExcelExporter.export(
@@ -225,9 +252,10 @@ async def main():
             logger.info(f"Результаты сохранены: {result_file}")
             logger.info("")
             logger.info("Статистика:")
-            logger.info(f"  ├─ Обратных ссылок найдено: {len(backlinks)}")
+            logger.info(f"  ├─ Всего ссылок собрано: {len(all_links)}")
             logger.info(f"  ├─ Уникальных доменов: {len(unique_domains)}")
             logger.info(f"  ├─ Зарегистрированных: {sum(1 for r in check_results if r.status.value == 'REGISTERED')}")
+            logger.info(f"  ├─ Свободных (AVAILABLE): {sum(1 for r in check_results if r.status.value == 'AVAILABLE')}")
             logger.info(f"  ├─ Валидных в отчете: {len(valid_domains)}")
             logger.info(f"  └─ Время выполнения: {duration.total_seconds():.1f}s")
             logger.info("=" * 70)

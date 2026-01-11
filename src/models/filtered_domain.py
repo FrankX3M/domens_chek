@@ -22,6 +22,7 @@ class FilteredDomain:
     is_registered: bool = True
     is_spam: bool = False
     is_excluded: bool = False
+    availability_status: Optional[str] = None  # "AVAILABLE", "REGISTERED", "ERROR"
     
     # Дополнительная информация
     spam_anchor_examples: List[str] = field(default_factory=list)
@@ -31,7 +32,6 @@ class FilteredDomain:
     def is_valid(self) -> bool:
         """Проверка, что домен валиден для отчета"""
         return (
-            self.is_registered and
             not self.is_spam and
             not self.is_excluded
         )
@@ -49,6 +49,7 @@ class FilteredDomain:
             "is_registered": self.is_registered,
             "is_spam": self.is_spam,
             "is_excluded": self.is_excluded,
+            "availability_status": self.availability_status,
             "spam_anchor_examples": self.spam_anchor_examples,
             "checked_at": self.checked_at.isoformat() if self.checked_at else None
         }

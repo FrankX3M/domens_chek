@@ -17,28 +17,30 @@ class CSVExporter:
         domains: List[FilteredDomain],
         output_file: str,
         include_spam: bool = False,
-        include_excluded: bool = False
+        include_excluded: bool = False,
+        only_available: bool = False
     ) -> str:
         """
         Экспорт доменов в CSV
-        
+
         Args:
             domains: Список доменов
             output_file: Путь к выходному файлу
             include_spam: Включить спам-домены
             include_excluded: Включить исключенные домены
-            
+            only_available: Только свободные домены
+
         Returns:
             Путь к созданному файлу
         """
         logger.info(f"Экспорт в CSV: {output_file}")
-        
+
         # Фильтруем домены
         filtered = [
             d for d in domains
             if (include_spam or not d.is_spam) and
                (include_excluded or not d.is_excluded) and
-               d.is_registered
+               (not only_available or d.availability_status == "AVAILABLE")
         ]
         
         # Создаем директорию если не существует
@@ -48,6 +50,7 @@ class CSVExporter:
         # Заголовки
         headers = [
             'Domain',
+            'Availability Status',
             'DR',
             'UR',
             'Backlink Count',
@@ -67,6 +70,7 @@ class CSVExporter:
             for domain in filtered:
                 writer.writerow({
                     'Domain': domain.domain,
+                    'Availability Status': domain.availability_status or 'UNKNOWN',
                     'DR': domain.dr if domain.dr is not None else '',
                     'UR': domain.ur if domain.ur is not None else '',
                     'Backlink Count': domain.backlink_count,
